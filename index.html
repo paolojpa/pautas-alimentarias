@@ -1,0 +1,1226 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Pauta Clínica por Intercambios</title>
+
+  <style>
+    :root{ --b:#111; --mut:#666; --line:#e8e8e8; --card:#fff; --bg:#fafafa; --pri:#2563eb; }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; color:var(--b); background:var(--bg); }
+    header{ background:#fff; border-bottom:1px solid var(--line); padding:14px 16px; display:flex; gap:12px; align-items:center; justify-content:space-between; }
+    h1{ margin:0; font-size:16px; }
+    .muted{ color:var(--mut); font-size:12px; }
+    main{ padding:14px; display:grid; gap:12px; grid-template-columns: 1.1fr 0.9fr; }
+    .card{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+    label{ display:block; font-size:12px; margin:0 0 6px 0; color:#333; }
+    input, textarea, select{
+      width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; background:#fff; font:inherit;
+    }
+    textarea{ min-height:90px; resize:vertical; }
+    button{
+      border:0; border-radius:10px; padding:10px 12px; cursor:pointer; font-weight:650;
+      background:var(--pri); color:#fff;
+    }
+    button.ghost{ background:#fff; color:#111; border:1px solid #ddd; }
+    .grid2{ display:grid; gap:10px; grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .grid3{ display:grid; gap:10px; grid-template-columns: repeat(3,minmax(0,1fr)); }
+    .sep{ height:1px; background:var(--line); margin:12px 0; }
+    table{ width:100%; border-collapse:collapse; }
+    th, td{ border-bottom:1px solid #eee; padding:8px; font-size:13px; vertical-align:top; }
+    th{ font-size:12px; color:#444; text-align:left; }
+    .pill{ display:inline-block; padding:3px 8px; border-radius:999px; background:#f3f4f6; border:1px solid #e5e7eb; font-size:12px; }
+    .ok{ color:#15803d; border-color:#bbf7d0; background:#f0fdf4; }
+    .warn{ color:#b45309; border-color:#fed7aa; background:#fffbeb; }
+
+    /* ====== IMPRESIÓN ====== */
+    #printSheet{ display:none; }
+
+    /* Márgenes de impresión (más espacio abajo para el pie) */
+    @page{ margin: 12mm 10mm 28mm 10mm; }
+
+    @media print{
+      header, #panelInputs, #panelOpciones, .no-print, #panelPauta { display:none !important; }
+      body{ background:#fff; }
+      main{ display:block; padding:0; }
+      #printSheet{ display:block !important; }
+    }
+
+    .print-wrap{
+      padding: 16px 16px 160px 16px; /* espacio para pie (evita que el pie se monte) */
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:#111;
+    }
+    .print-head{
+      display:flex; justify-content:space-between; gap:12px; align-items:flex-start;
+      margin-bottom: 10px;
+    }
+    .print-head .title{ font-size:18px; font-weight:800; margin:0; }
+    .print-meta{ font-size:12px; color:#111; line-height:1.35; }
+    .print-meta b{ font-weight:800; }
+
+    /* Tabla principal 3 columnas */
+    .print-table{
+      width:100%;
+      border-collapse:collapse;
+      table-layout:fixed;
+    }
+    .print-table th, .print-table td{
+      border: 1px solid #111;
+      vertical-align:top;
+      padding: 10px;
+      font-size: 12px;
+    }
+    .print-table th{
+      text-align:center;
+      font-weight:900;
+    }
+
+    .col-horario{ width: 18%; }
+    .col-porciones{ width: 32%; }
+    .col-opciones{ width: 50%; }
+
+    .horario-box{
+      font-weight:900;
+      text-transform:uppercase;
+      text-align:center;
+      letter-spacing:0.5px;
+    }
+
+    /* ✅ Porciones alineadas en filas reales */
+    .porcion-row{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .grp-num{
+      width:52px;
+      font-weight:900;
+      text-align:center;
+      white-space:nowrap;
+      flex:0 0 auto;
+    }
+    .grp-lab{
+      font-weight:900;
+      text-transform:uppercase;
+    }
+
+    .opciones-cell .op-title{
+      font-weight:900;
+      text-transform:uppercase;
+      margin:0 0 6px 0;
+    }
+    .opciones-cell ul{
+      margin:6px 0 0 16px;
+      padding:0;
+    }
+    .opciones-cell li{ margin:2px 0; }
+
+    /* Pie fijo */
+    
+    
+  
+    /* Firma solo en última página (flujo normal) */
+    #printFooter{
+      margin-top:24px;
+      text-align:center;
+      font-size:12px;
+      page-break-inside:avoid;
+    }
+    #printFooter .sig{
+      line-height:1.4;
+      font-weight:700;
+    }
+
+
+    /* ===== Ajustes de impresión ===== */
+    @media print{
+      /* Repite encabezado si la tabla parte entre páginas */
+      thead{ display: table-header-group; }
+      tfoot{ display: table-footer-group; }
+      tr{ page-break-inside: avoid; }
+    }
+
+    /* Firma SOLO una vez (al final del documento = última página) */
+    #printFooter{
+      display:block;
+      margin-top:24px;
+      text-align:center;
+      font-size:12px;
+      page-break-inside:avoid;
+    }
+    #printFooter .sig{
+      line-height:1.4;
+      font-weight:700;
+    }
+
+
+    /* ===== Tabla tipo Excel (resumen por porciones) ===== */
+    .excel-top{
+      display:flex; gap:10px; align-items:stretch; flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .excel-tag{
+      background:#111; color:#fff; font-weight:800; padding:10px 12px;
+      border-radius:10px; display:flex; align-items:center;
+      letter-spacing:0.2px;
+    }
+    .excel-targets{
+      display:grid; gap:10px;
+      grid-template-columns: repeat(7, minmax(140px,1fr));
+      flex:1;
+    }
+    .excel-target label{ margin:0 0 6px 0; }
+    .excel-table{
+      width:100%;
+      border-collapse:collapse;
+      table-layout:fixed;
+      font-size:13px;
+    }
+    .excel-table th, .excel-table td{
+      border:1px solid #111;
+      padding:8px;
+      vertical-align:middle;
+      background:#fff;
+    }
+    .excel-table thead th{
+      background:#111;
+      color:#fff;
+      font-weight:900;
+      text-align:center;
+    }
+    .excel-table .th-left{ text-align:left; }
+    .excel-table .th-mid{ text-align:center; width:130px; }
+    .excel-table td.num{ text-align:center; font-weight:700; }
+    .excel-table td.calc{ text-align:center; }
+    .excel-table input{
+      padding:8px;
+      border-radius:8px;
+      border:1px solid #ddd;
+    }
+    .excel-total th, .excel-total td, .excel-total{
+      background:#111 !important;
+      color:#fff !important;
+      font-weight:900;
+      text-align:center;
+    }
+    .excel-adeq th, .excel-adeq td, .excel-adeq{
+      background:#111 !important;
+      color:#fff !important;
+      font-weight:900;
+      text-align:center;
+    }
+    .excel-mol th, .excel-mol td, .excel-mol{
+      background:#111 !important;
+      color:#fff !important;
+      font-weight:900;
+      text-align:center;
+    }
+    @media (max-width: 900px){
+      .excel-targets{ grid-template-columns: repeat(2, minmax(140px,1fr)); }
+    }
+
+/* === Tabla Excel más angosta === */
+.excel-table {
+  font-size: 12px;
+  table-layout: fixed;
+}
+
+.excel-table th,
+.excel-table td {
+  padding: 6px 6px;
+}
+
+.excel-table th:nth-child(1),
+.excel-table td:nth-child(1) {
+  width: 220px; /* Grupos alimentos */
+}
+
+.excel-table th:nth-child(2),
+.excel-table td:nth-child(2) {
+  width: 80px;  /* Nº porciones */
+  text-align: center;
+}
+
+.excel-table th:nth-child(3),
+.excel-table td:nth-child(3),
+.excel-table th:nth-child(4),
+.excel-table td:nth-child(4),
+.excel-table th:nth-child(5),
+.excel-table td:nth-child(5),
+.excel-table th:nth-child(6),
+.excel-table td:nth-child(6) {
+  width: 95px;  /* kcal y macros */
+  text-align: center;
+}
+
+.excel-table input[type="number"] {
+  width: 60px;
+  height: 26px;
+  font-size: 12px;
+  padding: 3px 4px;
+}
+
+</style>
+</head>
+
+<body>
+<header>
+  <div>
+    <h1>Pauta clínica por porciones de intercambio</h1>
+    <div class="muted">Se actualiza automáticamente. Imprime en formato clínico tipo tabla (3 columnas).</div>
+  </div>
+  <div class="row no-print">
+    <button class="ghost" id="btnEjemplo">Cargar ejemplo</button>
+    <button id="btnImprimir">Imprimir</button>
+  </div>
+</header>
+
+<main>
+  <!-- IZQ: INPUTS -->
+  <section class="card" id="panelInputs">
+    <h2 style="margin:0 0 8px 0; font-size:14px;">1) Datos clínicos</h2>
+
+    <!-- ✅ sin fecha: se calcula automáticamente -->
+    <div class="grid2">
+      <div>
+        <label>Nombre paciente</label>
+        <input id="paciente" type="text" placeholder="Ej: Juan Pérez" />
+      </div>
+      <div>
+        <label>Rut (opcional)</label>
+        <input id="rut" type="text" placeholder="Ej: 12.345.678-9" />
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-top:10px;">
+      <div>
+        <label>Diagnóstico / motivo</label>
+        <input id="dx" type="text" placeholder="Ej: Control de peso, DM2, dislipidemia..." />
+      </div>
+      <div>
+        <label>Objetivo</label>
+        <input id="objetivo" type="text" placeholder="Ej: -500 kcal/d, mejorar hábitos..." />
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <h2 style="margin:0 0 8px 0; font-size:14px;">2) Resumen por porciones (tipo Excel)</h2>
+    <div class="muted" style="margin-bottom:8px;">Ingresa N° de porciones por grupo. Se calcula automáticamente (kcal, proteínas, CHO y lípidos), total, adecuación (%) y molécula calórica.</div>
+
+    <div class="card" style="border-radius:12px; border:1px solid #eee; padding:10px;">
+      <div class="excel-top">
+        <div class="excel-tag">APORTE BUSCADO</div>
+        <div class="excel-targets">
+          <div class="excel-target">
+            <label>Calorías</label>
+            <input id="target_kcal" type="number" min="0" step="1" placeholder="Ej: 1700"/>
+          </div>
+
+          <div class="excel-target">
+            <label>Moléc. % Prot</label>
+            <input id="mol_in_prot" type="number" min="0" step="1" placeholder="Ej: 20"/>
+          </div>
+          <div class="excel-target">
+            <label>Moléc. % CHO</label>
+            <input id="mol_in_cho" type="number" min="0" step="1" placeholder="Ej: 50"/>
+          </div>
+          <div class="excel-target">
+            <label>Moléc. % Lip</label>
+            <input id="mol_in_lip" type="number" min="0" step="1" placeholder="Ej: 30"/>
+          </div>
+
+          <div class="excel-target">
+            <label>Proteínas (g)</label>
+            <input id="target_prot" type="number" step="0.1" readonly />
+          </div>
+          <div class="excel-target">
+            <label>H. de C. (g)</label>
+            <input id="target_cho" type="number" step="0.1" readonly />
+          </div>
+          <div class="excel-target">
+            <label>Lípidos (g)</label>
+            <input id="target_lip" type="number" step="0.1" readonly />
+          </div>
+        </div>
+      </div>
+
+      <div style="overflow:auto;">
+        <table class="excel-table" aria-label="Resumen por porciones">
+          <thead>
+            <tr>
+              <th class="th-left">Grupos Alimentos</th>
+              <th class="th-mid">N° Porciones</th>
+              <th>Calorías</th>
+              <th>Proteínas (g)</th>
+              <th>H. de C. (g)</th>
+              <th>Lípidos (g)</th>
+            </tr>
+          </thead>
+          <tbody id="totalesTbody"></tbody>
+          <tfoot>
+            <tr class="excel-total">
+              <th class="th-left">TOTAL</th>
+              <th></th>
+              <th id="sum_kcal">0</th>
+              <th id="sum_prot">0</th>
+              <th id="sum_cho">0</th>
+              <th id="sum_lip">0</th>
+            </tr>
+            <tr class="excel-adeq">
+              <th class="th-left">ADECUACIÓN (%)</th>
+              <th></th>
+              <th id="adeq_kcal">—</th>
+              <th id="adeq_prot">—</th>
+              <th id="adeq_cho">—</th>
+              <th id="adeq_lip">—</th>
+            </tr>
+            <tr class="excel-mol">
+              <th class="th-left">MOLÉCULA CALÓRICA</th>
+              <th></th>
+              <th id="mol_kcal">100</th>
+              <th id="mol_prot">—</th>
+              <th id="mol_cho">—</th>
+              <th id="mol_lip">—</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <div style="min-width:180px; flex:1;">
+        <label>Agua (vasos/día)</label>
+        <input id="agua" type="number" min="0" step="1" placeholder="Ej: 8" />
+      </div>
+      <div style="min-width:240px; flex:2;">
+        <label>Indicaciones generales (opcional)</label>
+        <input id="indicaciones" type="text" placeholder="Ej: preferir cocción al horno, evitar bebidas azucaradas..." />
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <h2 style="margin:0 0 8px 0; font-size:14px;">3) Distribución por tiempo de comida</h2>
+    <div class="muted" style="margin-bottom:8px;">
+      Completa porciones por comida. La vista previa se actualiza al instante.
+    </div>
+
+    <div id="distribucionWrap"></div>
+
+    <div class="row" style="margin-top:10px;">
+      <button class="ghost" id="btnLimpiar">Limpiar distribución</button>
+      <span class="muted">Si una comida queda en 0, no se imprimirá en el informe.</span>
+    </div>
+  </section>
+
+  <!-- DER: Opciones -->
+  <aside class="card" id="panelOpciones">
+    <h2 style="margin:0 0 8px 0; font-size:14px;">Opciones por grupo (para consulta)</h2>
+    <div class="muted" style="margin-bottom:8px;">Se imprimen según lo usado en cada comida.</div>
+    <div class="grid2" id="opcionesGrid"></div>
+  </aside>
+
+  <!-- ABAJO: vista previa -->
+  <section class="card" id="panelPauta" style="grid-column:1/-1;">
+    <div class="row" style="justify-content:space-between; align-items:flex-start;">
+      <div>
+        <h2 style="margin:0 0 6px 0; font-size:14px;">Vista previa (kcal y macros)</h2>
+        <div class="muted" id="metaPauta">Edita los campos para ver el cálculo en vivo.</div>
+      </div>
+      <div class="row" style="gap:6px;">
+        <span class="pill" id="badgeEstado">Sin distribuir</span>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Tiempo de comida</th>
+          <th>Intercambios</th>
+          <th>Kcal</th>
+          <th>CHO (g)</th>
+          <th>Lípidos (g)</th>
+          <th>Prot (g)</th>
+        </tr>
+      </thead>
+      <tbody id="tablaPautaBody"></tbody>
+      <tfoot>
+        <tr>
+          <th colspan="2">TOTAL DÍA</th>
+          <th id="t_kcal">0</th>
+          <th id="t_cho">0</th>
+          <th id="t_lip">0</th>
+          <th id="t_prot">0</th>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="sep"></div>
+
+    <div class="grid2">
+      <div class="card" style="border-radius:12px; border:1px solid #eee;">
+        <b style="font-size:13px;">Chequeo distribución vs totales</b>
+        <div class="muted" id="chequeo">—</div>
+      </div>
+      <div class="card" style="border-radius:12px; border:1px solid #eee;">
+        <b style="font-size:13px;">Indicaciones</b>
+        <div class="muted" id="indicacionesOut">—</div>
+        <div class="muted" style="margin-top:6px;" id="aguaOut">—</div>
+      </div>
+    </div>
+
+    <div class="muted" style="margin-top:10px;">
+      *Herramienta de apoyo basada en porciones de intercambio. Ajustar según evaluación individual.
+    </div>
+  </section>
+
+  <!-- IMPRESIÓN -->
+  <section id="printSheet">
+    <div class="print-wrap">
+      <div class="print-head">
+        <div>
+          <div class="title">Pauta Nutricional</div>
+          <div class="print-meta" id="printMeta"></div>
+        </div>
+      </div>
+
+      <table class="print-table">
+        <thead>
+          <tr>
+            <th class="col-horario">HORARIOS DE COMIDAS</th>
+            <th class="col-porciones">PORCIONES<br><span style="font-weight:600">Estas son las porciones que debes consumir en base a tu requerimiento calórico y de macronutrientes</span></th>
+            <th class="col-opciones">TODOS ESTOS ALIMENTOS EQUIVALEN A 1 PORCIÓN<br><span style="font-weight:600">Estas son tus opciones, puedes elegir uno de ellos</span></th>
+          </tr>
+        </thead>
+        <tbody id="printBody"></tbody>
+      </table>
+
+      <div class="print-meta" style="margin-top:10px;">
+        <b>Indicaciones:</b> <span id="printIndicaciones">—</span><br>
+        <b>Agua:</b> <span id="printAgua">—</span>
+      </div>
+    </div>
+
+    <div id="printFooter">
+      <div class="line"></div>
+      <div class="sig">
+        Paolo Peña A.<br>
+        <span>Nutricionista</span><br>
+        <span>+56 9 XXXX XXXX</span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+  // Pie (centrado)
+  const FOOTER_NAME = "Paolo Peña A.";
+  const FOOTER_ROLE = "Nutricionista";
+  const FOOTER_PHONE = "+56 9 XXXX XXXX";
+
+  // ===== Fecha HOY =====
+  function todayISO(){
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  }
+  function formatDateCL(iso){
+    if(!iso) return "—";
+    const [y,m,d] = String(iso).split("-");
+    if(!y||!m||!d) return iso;
+    return `${d}/${m}/${y}`;
+  }
+  function todayDDMMYYYYDash(){
+    const d = new Date();
+    return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
+  }
+
+  // Nombre “limpio” para título PDF
+  function fileSafeName(s){
+    return String(s || "")
+      .trim()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9\s-_]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/\s/g, "_");
+  }
+
+  // ===== Tabla intercambios =====
+  const INTERCAMBIOS = {
+    cereales:              { label:"Cereales", kcal:140, cho:30,  lip:1,  prot:3 },
+
+    verduras_general:      { label:"Verduras (general)", kcal:30,  cho:5,   lip:0,  prot:2 },
+    verduras_libres:       { label:"Verduras (libre consumo)", kcal:10, cho:2.5, lip:0, prot:0 },
+
+    frutas:                { label:"Frutas", kcal:65,  cho:15,  lip:0,  prot:1 },
+
+    carnes_altas_grasa:    { label:"Carnes (altas en grasa)", kcal:120, cho:1, lip:8, prot:11 },
+    carnes_bajas_grasa:    { label:"Carnes (bajas en grasa)", kcal:65,  cho:1, lip:2, prot:11 },
+    leguminosas:           { label:"Leguminosas", kcal:170, cho:30, lip:1, prot:11 },
+
+    lacteos_altos_grasa:   { label:"Lácteos (altos en grasa)",  kcal:110, cho:9,  lip:6, prot:5 },
+    lacteos_medios_grasa:  { label:"Lácteos (medios en grasa)", kcal:85,  cho:9,  lip:3, prot:5 },
+    lacteos_bajos_grasa:   { label:"Lácteos (bajos en grasa)",  kcal:70,  cho:10, lip:0, prot:7 },
+
+    aceites_grasas:        { label:"Aceites y grasas", kcal:180, cho:0, lip:20, prot:0 },
+    ricos_lipidos:         { label:"Alimentos ricos en lípidos", kcal:175, cho:5, lip:15, prot:5 },
+
+    azucar:                { label:"Azúcar", kcal:20, cho:5, lip:0, prot:0 }
+  };
+
+  const COMIDAS = [
+    { key:"desayuno", label:"Desayuno" },
+    { key:"col_am",   label:"Colación AM" },
+    { key:"almuerzo", label:"Almuerzo" },
+    { key:"col_pm",   label:"Colación PM" },
+    { key:"once",     label:"Once" },
+    { key:"cena",     label:"Cena" },
+  ];
+
+  const $ = (id)=>document.getElementById(id);
+  const n = (v)=> Number(v || 0);
+
+  function fmt(x){
+    const r = Math.round(x*10)/10;
+    return (Math.abs(r - Math.round(r)) < 1e-9) ? String(Math.round(r)) : String(r);
+  }
+  function escapeSmall(str){
+    return (str || "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;");
+  }
+
+  function buildTotales(){
+    // Mantiene el nombre para no tocar el init: ahora construye la tabla tipo Excel.
+    const tbody = $("totalesTbody");
+    tbody.innerHTML = "";
+
+    Object.keys(INTERCAMBIOS).forEach(k=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="th-left">${INTERCAMBIOS[k].label}</td>
+        <td class="num">
+          <input type="number" min="0" step="0.5" id="t__${k}" placeholder="0"/>
+        </td>
+        <td class="calc" id="kcal__${k}">0</td>
+        <td class="calc" id="prot__${k}">0</td>
+        <td class="calc" id="cho__${k}">0</td>
+        <td class="calc" id="lip__${k}">0</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function buildOpciones(){
+    const grid = $("opcionesGrid");
+    grid.innerHTML = "";
+    Object.keys(INTERCAMBIOS).forEach(k=>{
+      const d = document.createElement("div");
+      d.innerHTML = `
+        <label>${INTERCAMBIOS[k].label}</label>
+        <textarea id="o__${k}" placeholder="Ej: 1 porción: ..."></textarea>
+      `;
+      grid.appendChild(d);
+    });
+
+    const defaults = {
+      cereales: "Los panes se pesan ya listos; la avena se pesa cruda.\n1 PORCIÓN: 2 rebanadas pan molde integral (70 gr) O pan casero integral (70 gr) O 1 unidad pampita (70 gr) O 1 unidad fajita (70 gr) O 3 cucharadas soperas avena (30 gr) O 4 uni galletas de arroz (40 gr) O 5 unidades galletas de salvado O 30 gr quinoa inflada (pop) sin azúcar añadida.",
+      verduras_general: "1 porción: 1 taza de verduras cocidas o 2 tazas crudas (referencial).",
+      verduras_libres: "Libre consumo: hojas verdes, pepino, apio (según tolerancia).",
+      frutas: "Cualquier fruta (aunque no esté aquí) se puede consumir.\n1 porción: 100–120 g o 1 taza (200 cc aprox). Ideal entera/picada, no en jugo.\nLa idea de pesar las frutas es que después sepa la porción al ojo.",
+      carnes_altas_grasa: "Todos los carneos se pesan o miden cocidos.\n1 porción: cortes grasos/embutidos (según pauta).",
+      carnes_bajas_grasa: "Todos los carneos se pesan o miden cocidos.\n1 PORCIÓN: 1 uni huevo entero (50 gr) O 3 claras huevo (50 gr) O 1 tajada jamón de pavo (50 gr) O 50 gr pechuga pollo O 50 gr pechuga pavo O 50 gr pescado O 50 gr vacuno bajo en grasa O 1⁄2 unidad tarro atún al agua O 50 gr legumbres O 50 gr carne soya O 50 gr tofu O 50 gr seitán.",
+      leguminosas: "1 porción: legumbre cocida según pauta (referencial).",
+      lacteos_altos_grasa: "1 porción: lácteo entero/alto en grasa (según pauta).",
+      lacteos_medios_grasa: "El lácteo puede ser semidescremado o descremado.\nSi es intolerante a la lactosa los puede consumir “sin lactosa”.\n1 PORCIÓN: 200 ml - 1 vaso leche semi-descremado O 1 yogurt light O 1 tajada quesillo - queso fresco - queso cabra (30 gr).",
+      lacteos_bajos_grasa: "El lácteo puede ser semidescremado o descremado.\nSi es intolerante a la lactosa los puede consumir “sin lactosa”.\n1 PORCIÓN: 200 ml - 1 vaso leche semi-descremado O 1 yogurt light O 1 tajada quesillo - queso fresco - queso cabra (30 gr).",
+      aceites_grasas: "1 porción: 1 cda aceite (10 ml) o equivalente (según pauta).",
+      ricos_lipidos: "Estas son grasas saludables, grasas buenas.\nAportan acidos grasos monoinsaturadas y poliinsaturadas.1 porción: alimentos ricos en grasa (según pauta).\n1 PORCIÓN: 3 cucharadas palta (1/2 unidad) (60 gr) O 1 puñado frutos secos sin sal (30 gr) O 30 gr de semillas variedad O 10 unidades aceitunas (30 gr).",
+      azucar: "1 porción: azúcar/mermelada/postre (según pauta)."
+    };
+    Object.keys(defaults).forEach(k=>{ $("o__"+k).value = defaults[k]; });
+  }
+
+  function buildDistribucion(){
+    const wrap = $("distribucionWrap");
+    wrap.innerHTML = "";
+    COMIDAS.forEach(c=>{
+      const card = document.createElement("div");
+      card.className = "card";
+      card.style.border = "1px solid #eee";
+      card.style.marginBottom = "10px";
+      card.innerHTML = `<b>${c.label}</b> <span class="muted">— porciones por grupo</span>`;
+      const grid = document.createElement("div");
+      grid.className = "grid3";
+      grid.style.marginTop = "10px";
+
+      Object.keys(INTERCAMBIOS).forEach(k=>{
+        const d = document.createElement("div");
+        d.innerHTML = `
+          <label>${INTERCAMBIOS[k].label}</label>
+          <input type="number" min="0" step="0.5" id="${c.key}__${k}" placeholder="0"/>
+        `;
+        grid.appendChild(d);
+      });
+
+      card.appendChild(grid);
+      wrap.appendChild(card);
+    });
+  }
+
+  function getTotales(){
+    const t = {};
+    Object.keys(INTERCAMBIOS).forEach(k=> t[k] = n($("t__"+k).value));
+    t.agua = n($("agua").value);
+    return t;
+  }
+  function getDist(){
+    const dist = {};
+    COMIDAS.forEach(c=>{
+      dist[c.key] = {};
+      Object.keys(INTERCAMBIOS).forEach(k=> dist[c.key][k] = n($(c.key+"__"+k).value));
+    });
+    return dist;
+  }
+
+  function sumMealMacros(mealObj){
+    let kcal=0, cho=0, lip=0, prot=0;
+    Object.keys(INTERCAMBIOS).forEach(k=>{
+      const p = n(mealObj[k]);
+      if(!p) return;
+      const ex = INTERCAMBIOS[k];
+      kcal += p*ex.kcal;
+      cho  += p*ex.cho;
+      lip  += p*ex.lip;
+      prot += p*ex.prot;
+    });
+    return {kcal, cho, lip, prot};
+  }
+
+  function sumDistByGroup(dist){
+    const s = {};
+    Object.keys(INTERCAMBIOS).forEach(k=> s[k]=0);
+    COMIDAS.forEach(c=>{
+      Object.keys(INTERCAMBIOS).forEach(k=> s[k] += n(dist[c.key][k]));
+    });
+    return s;
+  }
+
+  function generar(){
+    const paciente = ($("paciente").value || "").trim();
+    const rut = ($("rut").value || "").trim();
+    const dx = ($("dx").value || "").trim();
+    const obj = ($("objetivo").value || "").trim();
+
+    const fechaVal = todayISO(); // ✅ siempre hoy
+
+    const tot = getTotales();
+    const dist = getDist();
+    const sumByGroup = sumDistByGroup(dist);
+
+    const metaParts = [];
+    metaParts.push(`<b>Paciente:</b> ${paciente || "—"}`);
+    if(rut) metaParts.push(`<b>RUT:</b> ${escapeSmall(rut)}`);
+    metaParts.push(`<b>Fecha:</b> ${formatDateCL(fechaVal)}`);
+    if(dx) metaParts.push(`<b>Dx/Motivo:</b> ${escapeSmall(dx)}`);
+    if(obj) metaParts.push(`<b>Objetivo:</b> ${escapeSmall(obj)}`);
+    $("metaPauta").innerHTML = metaParts.join(" · ");
+
+    const body = $("tablaPautaBody");
+    body.innerHTML = "";
+
+    let T = {kcal:0, cho:0, lip:0, prot:0};
+    let anyDistrib = false;
+
+    COMIDAS.forEach(c=>{
+      const meal = dist[c.key];
+      const portions = Object.keys(INTERCAMBIOS).map(k=>({k,p:n(meal[k])})).filter(x=>x.p>0);
+
+      if(portions.length) anyDistrib = true;
+
+      const m = sumMealMacros(meal);
+      T.kcal += m.kcal; T.cho += m.cho; T.lip += m.lip; T.prot += m.prot;
+
+      const desc = portions.length
+        ? portions.map(x => `${INTERCAMBIOS[x.k].label}: <b>${fmt(x.p)}</b>`).join("<br>")
+        : `<span class="muted">—</span>`;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><b>${c.label}</b></td>
+        <td>${desc}</td>
+        <td>${fmt(m.kcal)}</td>
+        <td>${fmt(m.cho)}</td>
+        <td>${fmt(m.lip)}</td>
+        <td>${fmt(m.prot)}</td>
+      `;
+      body.appendChild(tr);
+    });
+
+    $("t_kcal").textContent = fmt(T.kcal);
+    $("t_cho").textContent  = fmt(T.cho);
+    $("t_lip").textContent  = fmt(T.lip);
+    $("t_prot").textContent = fmt(T.prot);
+
+    // ===== Resumen tipo Excel (por grupo + totales + adecuación + molécula) =====
+    let S = {kcal:0, prot:0, cho:0, lip:0};
+    Object.keys(INTERCAMBIOS).forEach(k=>{
+      const p = n($("t__"+k)?.value);
+      const ex = INTERCAMBIOS[k];
+      const kcal = p*ex.kcal;
+      const prot = p*ex.prot;
+      const cho = p*ex.cho;
+      const lip = p*ex.lip;
+
+      const set = (id,val)=>{ const el=$(id); if(el) el.textContent = fmt(val); };
+      set("kcal__"+k, kcal);
+      set("prot__"+k, prot);
+      set("cho__"+k, cho);
+      set("lip__"+k, lip);
+
+      S.kcal += kcal; S.prot += prot; S.cho += cho; S.lip += lip;
+    });
+
+    $("sum_kcal").textContent = fmt(S.kcal);
+    $("sum_prot").textContent = fmt(S.prot);
+    $("sum_cho").textContent  = fmt(S.cho);
+    $("sum_lip").textContent  = fmt(S.lip);
+
+    const tk = n($("target_kcal")?.value);
+
+    // Molécula calórica ingresada manualmente (%)
+    const mP = n($("mol_in_prot")?.value);
+    const mC = n($("mol_in_cho")?.value);
+    const mL = n($("mol_in_lip")?.value);
+    const mSum = mP + mC + mL;
+
+    // Calcula gramos objetivo desde kcal y molécula (Prot/CHO = 4 kcal/g, Lip = 9 kcal/g)
+    const targetProtG = (tk>0 && mSum>0) ? (tk * (mP/100) / 4) : 0;
+    const targetChoG  = (tk>0 && mSum>0) ? (tk * (mC/100) / 4) : 0;
+    const targetLipG  = (tk>0 && mSum>0) ? (tk * (mL/100) / 9) : 0;
+
+    // Pinta gramos (solo lectura)
+    if($("target_prot")) $("target_prot").value = (tk>0 && mSum>0) ? fmt(targetProtG) : "";
+    if($("target_cho"))  $("target_cho").value  = (tk>0 && mSum>0) ? fmt(targetChoG)  : "";
+    if($("target_lip"))  $("target_lip").value  = (tk>0 && mSum>0) ? fmt(targetLipG)  : "";
+
+    const pct = (num,den)=> den>0 ? Math.round((num/den)*100) : null;
+
+    // Adecuación (%): Total calculado vs objetivo derivado
+    $("adeq_kcal").textContent = (tk>0) ? String(pct(S.kcal, tk)) : "—";
+    $("adeq_prot").textContent = (targetProtG>0) ? String(pct(S.prot, targetProtG)) : "—";
+    $("adeq_cho").textContent  = (targetChoG>0)  ? String(pct(S.cho,  targetChoG))  : "—";
+    $("adeq_lip").textContent  = (targetLipG>0)  ? String(pct(S.lip,  targetLipG))  : "—";
+
+    // Molécula calórica: muestra lo ingresado y total (suma)
+    const molTotal = mSum;
+    $("mol_kcal").textContent  = (mSum>0) ? fmt(molTotal) : "—";
+    $("mol_prot").textContent  = (mSum>0) ? fmt(mP) : "—";
+    $("mol_cho").textContent   = (mSum>0) ? fmt(mC) : "—";
+    $("mol_lip").textContent   = (mSum>0) ? fmt(mL) : "—";
+
+
+    const ind = ($("indicaciones").value || "").trim();
+    $("indicacionesOut").textContent = ind || "—";
+    $("aguaOut").textContent = tot.agua ? `Agua: ${tot.agua} vasos/día.` : "Agua: —";
+
+    let ok = true;
+    const diffs = Object.keys(INTERCAMBIOS).map(k=>{
+      const diff = (sumByGroup[k] - (tot[k] || 0));
+      if (Math.abs(diff) > 1e-6) ok = false;
+      return { k, diff };
+    });
+
+    const badge = $("badgeEstado");
+    if(!anyDistrib){
+      badge.textContent = "Sin distribuir";
+      badge.className = "pill";
+    }else if(ok){
+      badge.textContent = "Distribución OK ✅";
+      badge.className = "pill ok";
+    }else{
+      badge.textContent = "Revisar distribución ⚠️";
+      badge.className = "pill warn";
+    }
+
+    const lines = diffs
+      .filter(x=> Math.abs(x.diff) > 1e-6)
+      .map(x=>{
+        const sign = x.diff > 0 ? "+" : "";
+        return `${INTERCAMBIOS[x.k].label}: <b>${sign}${fmt(x.diff)}</b> (Distribución - Total)`;
+      });
+
+    $("chequeo").innerHTML = ok
+      ? (anyDistrib ? "Todo cuadra con los totales ingresados." : "—")
+      : (lines.join("<br>") || "—");
+  }
+
+  // ✅ IMPRESIÓN: filas reales + rowspan; ✅ sin "+"
+  function buildPrintSheet(){
+    const paciente = ($("paciente").value || "").trim();
+    const rut = ($("rut").value || "").trim();
+    const dx = ($("dx").value || "").trim();
+    const obj = ($("objetivo").value || "").trim();
+    const fechaVal = todayISO();
+
+    const tot = getTotales();
+    const dist = getDist();
+
+    const meta = [
+      `<b>Paciente:</b> ${paciente || "—"}`,
+      rut ? `<b>RUT:</b> ${escapeSmall(rut)}` : "",
+      `<b>Fecha:</b> ${formatDateCL(fechaVal)}`
+    ].filter(Boolean);
+
+    if(dx) meta.push(`<b>Dx/Motivo:</b> ${escapeSmall(dx)}`);
+    if(obj) meta.push(`<b>Objetivo:</b> ${escapeSmall(obj)}`);
+    $("printMeta").innerHTML = meta.join("<br>");
+
+    const ind = ($("indicaciones").value || "").trim();
+    $("printIndicaciones").textContent = ind || "—";
+    $("printAgua").textContent = tot.agua ? `${tot.agua} vasos/día` : "—";
+
+    $("printFooter").querySelector(".sig").innerHTML =
+      `${escapeSmall(FOOTER_NAME)}<br><span>${escapeSmall(FOOTER_ROLE)}</span><br><span>${escapeSmall(FOOTER_PHONE)}</span>`;
+
+    const tbody = $("printBody");
+    tbody.innerHTML = "";
+
+    let printedAny = false;
+
+    COMIDAS.forEach(c=>{
+      const meal = dist[c.key];
+
+      const portions = Object.keys(INTERCAMBIOS)
+        .map(k => ({k, p: n(meal[k])}))
+        .filter(x => x.p > 0);
+
+      if(!portions.length) return;
+      printedAny = true;
+
+      portions.forEach((x, idx) => {
+        const raw = ($("o__"+x.k)?.value || "").trim();
+        const safe = escapeSmall(raw);
+
+        const lines = safe.split(/\n+/).map(s=>s.trim()).filter(Boolean);
+        const list = lines.length > 1
+          ? `<ul>${lines.map(li=>`<li>${li}</li>`).join("")}</ul>`
+          : (safe ? `<div>${safe}</div>` : `<div>—</div>`);
+
+        const tr = document.createElement("tr");
+
+        if(idx === 0){
+          tr.innerHTML = `
+            <td class="col-horario" rowspan="${portions.length}">
+              <div class="horario-box">${c.label}</div>
+            </td>
+            <td class="col-porciones">
+              <div class="porcion-row">
+                <div class="grp-num">${fmt(x.p)}</div>
+                <div class="grp-lab">${INTERCAMBIOS[x.k].label}</div>
+              </div>
+            </td>
+            <td class="col-opciones opciones-cell">
+              <div class="op-title">${INTERCAMBIOS[x.k].label}:</div>
+              ${list}
+            </td>
+          `;
+        } else {
+          tr.innerHTML = `
+            <td class="col-porciones">
+              <div class="porcion-row">
+                <div class="grp-num">${fmt(x.p)}</div>
+                <div class="grp-lab">${INTERCAMBIOS[x.k].label}</div>
+              </div>
+            </td>
+            <td class="col-opciones opciones-cell">
+              <div class="op-title">${INTERCAMBIOS[x.k].label}:</div>
+              ${list}
+            </td>
+          `;
+        }
+        tbody.appendChild(tr);
+      });
+    });
+
+    if(!printedAny){
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="col-horario"><div class="horario-box">—</div></td>
+        <td class="col-porciones">No hay porciones distribuidas para imprimir.</td>
+        <td class="col-opciones">Completa al menos una comida con porciones.</td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+
+  function limpiar(){
+    COMIDAS.forEach(c=>{
+      Object.keys(INTERCAMBIOS).forEach(k=> $(c.key+"__"+k).value = "");
+    });
+    generar();
+  }
+
+  function cargarEjemplo(){
+    $("paciente").value = "Paciente Ejemplo";
+    $("rut").value = "12.345.678-9";
+    $("dx").value = "Control de peso";
+    $("objetivo").value = "Distribución por intercambios";
+    $("target_kcal").value = 1700;
+    $("mol_in_prot").value = 18;
+    $("mol_in_cho").value = 52;
+    $("mol_in_lip").value = 30;
+
+    const setT = (k,v)=> $("t__"+k).value = v;
+    setT("cereales", 5);
+    setT("frutas", 3);
+    setT("carnes_bajas_grasa", 3);
+    setT("lacteos_bajos_grasa", 2);
+    setT("aceites_grasas", 2);
+    setT("verduras_libres", 2);
+    $("agua").value = 8;
+    $("indicaciones").value = "Preferir cocciones bajas en grasa. Verduras en cada comida.";
+
+    const setD = (meal,k,v)=> $(meal+"__"+k).value = v;
+
+    setD("desayuno","cereales",2);
+    setD("desayuno","frutas",1);
+    setD("desayuno","lacteos_bajos_grasa",1);
+
+    setD("almuerzo","cereales",3);
+    setD("almuerzo","carnes_bajas_grasa",3);
+    setD("almuerzo","aceites_grasas",2);
+    setD("almuerzo","verduras_libres",2);
+
+    generar();
+  }
+
+  function wireAutoUpdate(){
+    const idsDirectos = ["paciente","rut","dx","objetivo","agua","indicaciones","target_kcal","mol_in_prot","mol_in_cho","mol_in_lip"];
+    idsDirectos.forEach(id=>{
+      const node = $(id);
+      if(!node) return;
+      node.addEventListener("input", generar);
+      node.addEventListener("change", generar);
+    });
+
+    Object.keys(INTERCAMBIOS).forEach(k=>{
+      const node = $("t__"+k);
+      if(!node) return;
+      node.addEventListener("input", generar);
+    });
+
+    COMIDAS.forEach(c=>{
+      Object.keys(INTERCAMBIOS).forEach(k=>{
+        const node = $(c.key+"__"+k);
+        if(!node) return;
+        node.addEventListener("input", generar);
+      });
+    });
+  }
+
+  // Init
+  buildTotales();
+  buildOpciones();
+  buildDistribucion();
+  wireAutoUpdate();
+  generar();
+
+  // ✅ Imprimir: abre ventana con título Paciente_DD-MM-YYYY
+  $("btnImprimir").addEventListener("click", ()=>{
+    generar();
+    buildPrintSheet();
+
+    const paciente = fileSafeName($("paciente").value || "Paciente");
+    const fechaHoy = todayDDMMYYYYDash();
+
+    const printHtml = document.getElementById("printSheet").innerHTML;
+    const styleText = document.querySelector("style")?.innerHTML || "";
+
+    const w = window.open("", "_blank");
+    w.document.open();
+    w.document.write(`
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>${paciente}_${fechaHoy}</title>
+  <style>
+    ${styleText}
+    #printSheet{ display:block !important; }
+    header, #panelInputs, #panelOpciones, .no-print, #panelPauta { display:none !important; }
+    main{ display:block !important; padding:0 !important; }
+  
+    /* Firma solo en última página (flujo normal) */
+    #printFooter{
+      margin-top:24px;
+      text-align:center;
+      font-size:12px;
+      page-break-inside:avoid;
+    }
+    #printFooter .sig{
+      line-height:1.4;
+      font-weight:700;
+    }
+
+
+    /* ===== Ajustes de impresión ===== */
+    @media print{
+      /* Repite encabezado si la tabla parte entre páginas */
+      thead{ display: table-header-group; }
+      tfoot{ display: table-footer-group; }
+      tr{ page-break-inside: avoid; }
+    }
+
+    /* Firma SOLO una vez (al final del documento = última página) */
+    #printFooter{
+      display:block;
+      margin-top:24px;
+      text-align:center;
+      font-size:12px;
+      page-break-inside:avoid;
+    }
+    #printFooter .sig{
+      line-height:1.4;
+      font-weight:700;
+    }
+
+
+    /* ===== Tabla tipo Excel (resumen por porciones) ===== */
+    .excel-top{
+      display:flex; gap:10px; align-items:stretch; flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .excel-tag{
+      background:#111; color:#fff; font-weight:800; padding:10px 12px;
+      border-radius:10px; display:flex; align-items:center;
+      letter-spacing:0.2px;
+    }
+    .excel-targets{
+      display:grid; gap:10px;
+      grid-template-columns: repeat(7, minmax(140px,1fr));
+      flex:1;
+    }
+    .excel-target label{ margin:0 0 6px 0; }
+    .excel-table{
+      width:100%;
+      border-collapse:collapse;
+      table-layout:fixed;
+      font-size:13px;
+    }
+    .excel-table th, .excel-table td{
+      border:1px solid #111;
+      padding:8px;
+      vertical-align:middle;
+      background:#fff;
+    }
+    .excel-table thead th{
+      background:#111;
+      color:#fff;
+      font-weight:900;
+      text-align:center;
+    }
+    .excel-table .th-left{ text-align:left; }
+    .excel-table .th-mid{ text-align:center; width:130px; }
+    .excel-table td.num{ text-align:center; font-weight:700; }
+    .excel-table td.calc{ text-align:center; }
+    .excel-table input{
+      padding:8px;
+      border-radius:8px;
+      border:1px solid #ddd;
+    }
+    .excel-total th, .excel-total td, .excel-total{
+      background:#111 !important;
+      color:#fff !important;
+      font-weight:900;
+      text-align:center;
+    }
+    .excel-adeq th, .excel-adeq td, .excel-adeq{
+      background:#111 !important;
+      color:#fff !important;
+      font-weight:900;
+      text-align:center;
+    }
+    .excel-mol th, .excel-mol td, .excel-mol{
+      background:#111 !important;
+      color:#fff !important;
+      font-weight:900;
+      text-align:center;
+    }
+    @media (max-width: 900px){
+      .excel-targets{ grid-template-columns: repeat(2, minmax(140px,1fr)); }
+    }
+
+/* === Tabla Excel más angosta === */
+.excel-table {
+  font-size: 12px;
+  table-layout: fixed;
+}
+
+.excel-table th,
+.excel-table td {
+  padding: 6px 6px;
+}
+
+.excel-table th:nth-child(1),
+.excel-table td:nth-child(1) {
+  width: 220px; /* Grupos alimentos */
+}
+
+.excel-table th:nth-child(2),
+.excel-table td:nth-child(2) {
+  width: 80px;  /* Nº porciones */
+  text-align: center;
+}
+
+.excel-table th:nth-child(3),
+.excel-table td:nth-child(3),
+.excel-table th:nth-child(4),
+.excel-table td:nth-child(4),
+.excel-table th:nth-child(5),
+.excel-table td:nth-child(5),
+.excel-table th:nth-child(6),
+.excel-table td:nth-child(6) {
+  width: 95px;  /* kcal y macros */
+  text-align: center;
+}
+
+.excel-table input[type="number"] {
+  width: 60px;
+  height: 26px;
+  font-size: 12px;
+  padding: 3px 4px;
+}
+
+</style>
+</head>
+<body>
+  <main>
+    <section id="printSheet">${printHtml}</section>
+  </main>
+  <script>
+    window.onload = () => window.print();
+  <\/script>
+</body>
+</html>
+    `);
+    w.document.close();
+  });
+
+  $("btnLimpiar").addEventListener("click", limpiar);
+  $("btnEjemplo").addEventListener("click", cargarEjemplo);
+
+
+
+
+</script>
+</body>
+</html>
