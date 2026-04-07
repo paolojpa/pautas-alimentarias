@@ -490,7 +490,7 @@
       <div class="sig">
         Paolo Peña A.<br>
         <span>Nutricionista</span><br>
-        <span>+56 9 4399 8845</span>
+        <span>+56 9 7392 9960</span>
       </div>
     </div>
   </section>
@@ -886,22 +886,51 @@
         const tr = document.createElement("tr");
 
         if(idx === 0){
-          tr.innerHTML = `
-            <td class="col-horario" rowspan="${portions.length}">
-              <div class="horario-box">${c.label}</div>
-            </td>
-            <td class="col-porciones">
-              <div class="porcion-row">
-                <div class="grp-num">${fmt(x.p)}</div>
-                <div class="grp-lab">${INTERCAMBIOS[x.k].label}</div>
-              </div>
-            </td>
-            <td class="col-opciones opciones-cell">
-              <div class="op-title">${INTERCAMBIOS[x.k].label}:</div>
-              ${list}
-            </td>
-          `;
-        } else {
+  tr.innerHTML = `
+    <td class="col-horario" rowspan="${portions.length}">
+      <div class="horario-box">${c.label}</div>
+    </td>
+    <td class="col-porciones">
+      <div class="porcion-row">
+        <div class="grp-num">${fmt(x.p)}</div>
+        <div class="grp-lab">${
+          x.k === "cho_desayuno_once" || x.k === "cho_almuerzo_cena"
+            ? "CEREAL"
+            : INTERCAMBIOS[x.k].label
+        }</div>
+      </div>
+    </td>
+    <td class="col-opciones opciones-cell">
+      <div class="op-title">${
+        x.k === "cho_desayuno_once" || x.k === "cho_almuerzo_cena"
+          ? "CEREAL:"
+          : INTERCAMBIOS[x.k].label + ":"
+      }</div>
+      ${list}
+    </td>
+  `;
+} else {
+  tr.innerHTML = `
+    <td class="col-porciones">
+      <div class="porcion-row">
+        <div class="grp-num">${fmt(x.p)}</div>
+        <div class="grp-lab">${
+          x.k === "cho_desayuno_once" || x.k === "cho_almuerzo_cena"
+            ? "CEREAL"
+            : INTERCAMBIOS[x.k].label
+        }</div>
+      </div>
+    </td>
+    <td class="col-opciones opciones-cell">
+      <div class="op-title">${
+        x.k === "cho_desayuno_once" || x.k === "cho_almuerzo_cena"
+          ? "CEREAL:"
+          : INTERCAMBIOS[x.k].label + ":"
+      }</div>
+      ${list}
+    </td>
+  `;
+} else {
           tr.innerHTML = `
             <td class="col-porciones">
               <div class="porcion-row">
