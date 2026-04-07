@@ -131,18 +131,6 @@
       tr{ page-break-inside: avoid; }
     }
 
-    #printFooter{
-      display:block;
-      margin-top:24px;
-      text-align:center;
-      font-size:12px;
-      page-break-inside:avoid;
-    }
-    #printFooter .sig{
-      line-height:1.4;
-      font-weight:700;
-    }
-
     .excel-top{
       display:flex; gap:10px; align-items:stretch; flex-wrap:wrap;
       margin-bottom:10px;
@@ -490,7 +478,7 @@
       <div class="sig">
         Paolo Peña A.<br>
         <span>Nutricionista</span><br>
-        <span>+56 9 7392 9960</span>
+        <span>+56 9 4399 8845</span>
       </div>
     </div>
   </section>
@@ -883,67 +871,47 @@
           ? `<ul>${lines.map(li=>`<li>${li}</li>`).join("")}</ul>`
           : (safe ? `<div>${safe}</div>` : `<div>—</div>`);
 
+        const nombrePrint = (x.k === "cho_desayuno_once" || x.k === "cho_almuerzo_cena")
+          ? "CEREAL"
+          : INTERCAMBIOS[x.k].label;
+
+        const tituloPrint = (x.k === "cho_desayuno_once" || x.k === "cho_almuerzo_cena")
+          ? "CEREAL:"
+          : INTERCAMBIOS[x.k].label + ":";
+
         const tr = document.createElement("tr");
 
         if(idx === 0){
-  tr.innerHTML = `
-    <td class="col-horario" rowspan="${portions.length}">
-      <div class="horario-box">${c.label}</div>
-    </td>
-    <td class="col-porciones">
-      <div class="porcion-row">
-        <div class="grp-num">${fmt(x.p)}</div>
-        <div class="grp-lab">${
-          x.k === "cho_desayuno_once" || x.k === "cho_almuerzo_cena"
-            ? "CEREAL"
-            : INTERCAMBIOS[x.k].label
-        }</div>
-      </div>
-    </td>
-    <td class="col-opciones opciones-cell">
-      <div class="op-title">${
-        x.k === "cho_desayuno_once" || x.k === "cho_almuerzo_cena"
-          ? "CEREAL:"
-          : INTERCAMBIOS[x.k].label + ":"
-      }</div>
-      ${list}
-    </td>
-  `;
-} else {
-  tr.innerHTML = `
-    <td class="col-porciones">
-      <div class="porcion-row">
-        <div class="grp-num">${fmt(x.p)}</div>
-        <div class="grp-lab">${
-          x.k === "cho_desayuno_once" || x.k === "cho_almuerzo_cena"
-            ? "CEREAL"
-            : INTERCAMBIOS[x.k].label
-        }</div>
-      </div>
-    </td>
-    <td class="col-opciones opciones-cell">
-      <div class="op-title">${
-        x.k === "cho_desayuno_once" || x.k === "cho_almuerzo_cena"
-          ? "CEREAL:"
-          : INTERCAMBIOS[x.k].label + ":"
-      }</div>
-      ${list}
-    </td>
-  `;
-} else {
+          tr.innerHTML = `
+            <td class="col-horario" rowspan="${portions.length}">
+              <div class="horario-box">${c.label}</div>
+            </td>
+            <td class="col-porciones">
+              <div class="porcion-row">
+                <div class="grp-num">${fmt(x.p)}</div>
+                <div class="grp-lab">${nombrePrint}</div>
+              </div>
+            </td>
+            <td class="col-opciones opciones-cell">
+              <div class="op-title">${tituloPrint}</div>
+              ${list}
+            </td>
+          `;
+        } else {
           tr.innerHTML = `
             <td class="col-porciones">
               <div class="porcion-row">
                 <div class="grp-num">${fmt(x.p)}</div>
-                <div class="grp-lab">${INTERCAMBIOS[x.k].label}</div>
+                <div class="grp-lab">${nombrePrint}</div>
               </div>
             </td>
             <td class="col-opciones opciones-cell">
-              <div class="op-title">${INTERCAMBIOS[x.k].label}:</div>
+              <div class="op-title">${tituloPrint}</div>
               ${list}
             </td>
           `;
         }
+
         tbody.appendChild(tr);
       });
     });
@@ -1074,17 +1042,6 @@
       thead{ display: table-header-group; }
       tfoot{ display: table-footer-group; }
       tr{ page-break-inside: avoid; }
-    }
-    #printFooter{
-      display:block;
-      margin-top:24px;
-      text-align:center;
-      font-size:12px;
-      page-break-inside:avoid;
-    }
-    #printFooter .sig{
-      line-height:1.4;
-      font-weight:700;
     }
   </style>
 </head>
