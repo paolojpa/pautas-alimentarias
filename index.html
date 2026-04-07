@@ -35,10 +35,8 @@
     .ok{ color:#15803d; border-color:#bbf7d0; background:#f0fdf4; }
     .warn{ color:#b45309; border-color:#fed7aa; background:#fffbeb; }
 
-    /* ====== IMPRESIÓN ====== */
     #printSheet{ display:none; }
 
-    /* Márgenes de impresión (más espacio abajo para el pie) */
     @page{ margin: 12mm 10mm 28mm 10mm; }
 
     @media print{
@@ -49,7 +47,7 @@
     }
 
     .print-wrap{
-      padding: 16px 16px 160px 16px; /* espacio para pie (evita que el pie se monte) */
+      padding: 16px 16px 160px 16px;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
       color:#111;
     }
@@ -61,7 +59,6 @@
     .print-meta{ font-size:12px; color:#111; line-height:1.35; }
     .print-meta b{ font-weight:800; }
 
-    /* Tabla principal 3 columnas */
     .print-table{
       width:100%;
       border-collapse:collapse;
@@ -89,7 +86,6 @@
       letter-spacing:0.5px;
     }
 
-    /* ✅ Porciones alineadas en filas reales */
     .porcion-row{
       display:flex;
       gap:10px;
@@ -118,11 +114,6 @@
     }
     .opciones-cell li{ margin:2px 0; }
 
-    /* Pie fijo */
-    
-    
-  
-    /* Firma solo en última página (flujo normal) */
     #printFooter{
       margin-top:24px;
       text-align:center;
@@ -134,16 +125,12 @@
       font-weight:700;
     }
 
-
-    /* ===== Ajustes de impresión ===== */
     @media print{
-      /* Repite encabezado si la tabla parte entre páginas */
       thead{ display: table-header-group; }
       tfoot{ display: table-footer-group; }
       tr{ page-break-inside: avoid; }
     }
 
-    /* Firma SOLO una vez (al final del documento = última página) */
     #printFooter{
       display:block;
       margin-top:24px;
@@ -156,8 +143,6 @@
       font-weight:700;
     }
 
-
-    /* ===== Tabla tipo Excel (resumen por porciones) ===== */
     .excel-top{
       display:flex; gap:10px; align-items:stretch; flex-wrap:wrap;
       margin-bottom:10px;
@@ -222,48 +207,46 @@
       .excel-targets{ grid-template-columns: repeat(2, minmax(140px,1fr)); }
     }
 
-/* === Tabla Excel más angosta === */
-.excel-table {
-  font-size: 12px;
-  table-layout: fixed;
-}
+    .excel-table {
+      font-size: 12px;
+      table-layout: fixed;
+    }
 
-.excel-table th,
-.excel-table td {
-  padding: 6px 6px;
-}
+    .excel-table th,
+    .excel-table td {
+      padding: 6px 6px;
+    }
 
-.excel-table th:nth-child(1),
-.excel-table td:nth-child(1) {
-  width: 220px; /* Grupos alimentos */
-}
+    .excel-table th:nth-child(1),
+    .excel-table td:nth-child(1) {
+      width: 220px;
+    }
 
-.excel-table th:nth-child(2),
-.excel-table td:nth-child(2) {
-  width: 80px;  /* Nº porciones */
-  text-align: center;
-}
+    .excel-table th:nth-child(2),
+    .excel-table td:nth-child(2) {
+      width: 80px;
+      text-align: center;
+    }
 
-.excel-table th:nth-child(3),
-.excel-table td:nth-child(3),
-.excel-table th:nth-child(4),
-.excel-table td:nth-child(4),
-.excel-table th:nth-child(5),
-.excel-table td:nth-child(5),
-.excel-table th:nth-child(6),
-.excel-table td:nth-child(6) {
-  width: 95px;  /* kcal y macros */
-  text-align: center;
-}
+    .excel-table th:nth-child(3),
+    .excel-table td:nth-child(3),
+    .excel-table th:nth-child(4),
+    .excel-table td:nth-child(4),
+    .excel-table th:nth-child(5),
+    .excel-table td:nth-child(5),
+    .excel-table th:nth-child(6),
+    .excel-table td:nth-child(6) {
+      width: 95px;
+      text-align: center;
+    }
 
-.excel-table input[type="number"] {
-  width: 60px;
-  height: 26px;
-  font-size: 12px;
-  padding: 3px 4px;
-}
-
-</style>
+    .excel-table input[type="number"] {
+      width: 60px;
+      height: 26px;
+      font-size: 12px;
+      padding: 3px 4px;
+    }
+  </style>
 </head>
 
 <body>
@@ -279,11 +262,9 @@
 </header>
 
 <main>
-  <!-- IZQ: INPUTS -->
   <section class="card" id="panelInputs">
     <h2 style="margin:0 0 8px 0; font-size:14px;">1) Datos clínicos</h2>
 
-    <!-- ✅ sin fecha: se calcula automáticamente -->
     <div class="grid2">
       <div>
         <label>Nombre paciente</label>
@@ -417,14 +398,12 @@
     </div>
   </section>
 
-  <!-- DER: Opciones -->
   <aside class="card" id="panelOpciones">
     <h2 style="margin:0 0 8px 0; font-size:14px;">Opciones por grupo (para consulta)</h2>
     <div class="muted" style="margin-bottom:8px;">Se imprimen según lo usado en cada comida.</div>
     <div class="grid2" id="opcionesGrid"></div>
   </aside>
 
-  <!-- ABAJO: vista previa -->
   <section class="card" id="panelPauta" style="grid-column:1/-1;">
     <div class="row" style="justify-content:space-between; align-items:flex-start;">
       <div>
@@ -480,7 +459,6 @@
     </div>
   </section>
 
-  <!-- IMPRESIÓN -->
   <section id="printSheet">
     <div class="print-wrap">
       <div class="print-head">
@@ -519,12 +497,10 @@
 </main>
 
 <script>
-  // Pie (centrado)
   const FOOTER_NAME = "Paolo Peña A.";
   const FOOTER_ROLE = "Nutricionista";
   const FOOTER_PHONE = "+56 9 4399 8845";
 
-  // ===== Fecha HOY =====
   function todayISO(){
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
@@ -540,7 +516,6 @@
     return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
   }
 
-  // Nombre “limpio” para título PDF
   function fileSafeName(s){
     return String(s || "")
       .trim()
@@ -551,9 +526,9 @@
       .replace(/\s/g, "_");
   }
 
-  // ===== Tabla intercambios =====
   const INTERCAMBIOS = {
-    cereales:              { label:"Cereales", kcal:140, cho:30,  lip:1,  prot:3 },
+    cho_desayuno_once:     { label:"CHO desayuno / once", kcal:140, cho:30, lip:1, prot:3 },
+    cho_almuerzo_cena:     { label:"CHO almuerzo / cena", kcal:140, cho:30, lip:1, prot:3 },
 
     verduras_general:      { label:"Verduras (general)", kcal:30,  cho:5,   lip:0,  prot:2 },
     verduras_libres:       { label:"Verduras (libre consumo)", kcal:10, cho:2.5, lip:0, prot:0 },
@@ -598,7 +573,6 @@
   }
 
   function buildTotales(){
-    // Mantiene el nombre para no tocar el init: ahora construye la tabla tipo Excel.
     const tbody = $("totalesTbody");
     tbody.innerHTML = "";
 
@@ -631,7 +605,9 @@
     });
 
     const defaults = {
-      cereales: "Los panes se pesan ya listos; la avena se pesa cruda.\n1 PORCIÓN: 2 rebanadas pan molde integral (70 gr) O pan casero integral (70 gr) O 1 unidad pampita (70 gr) O 1 unidad fajita (70 gr) O 3 cucharadas soperas avena (30 gr) O 4 uni galletas de arroz (40 gr) O 5 unidades galletas de salvado O 30 gr quinoa inflada (pop) sin azúcar añadida.",
+      cho_desayuno_once: "Los panes se pesan ya listos; la avena se pesa cruda.\n1 PORCIÓN: 2 rebanadas pan molde integral (70 gr) O pan casero integral (70 gr) O 1 unidad pampita (70 gr) O 1 unidad fajita (70 gr) O 3 cucharadas soperas avena (30 gr) O 4 uni galletas de arroz (40 gr) O 5 unidades galletas de salvado O 30 gr quinoa inflada (pop) sin azúcar añadida.",
+      cho_almuerzo_cena: "1 PORCIÓN: 3/4 taza arroz cocido O 1 taza fideos cocidos O 1 papa mediana O 1/2 taza puré O 3/4 taza quinoa cocida O 1 taza choclo cocido O 1/2 taza couscous cocido.",
+
       verduras_general: "1 porción: 1 taza de verduras cocidas o 2 tazas crudas (referencial).",
       verduras_libres: "Libre consumo: hojas verdes, pepino, apio (según tolerancia).",
       frutas: "Cualquier fruta (aunque no esté aquí) se puede consumir.\n1 porción: 100–120 g o 1 taza (200 cc aprox). Ideal entera/picada, no en jugo.\nLa idea de pesar las frutas es que después sepa la porción al ojo.",
@@ -642,7 +618,7 @@
       lacteos_medios_grasa: "El lácteo puede ser semidescremado o descremado.\nSi es intolerante a la lactosa los puede consumir “sin lactosa”.\n1 PORCIÓN: 200 ml - 1 vaso leche semi-descremado O 1 yogurt light O 1 tajada quesillo - queso fresco - queso cabra (30 gr).",
       lacteos_bajos_grasa: "El lácteo puede ser semidescremado o descremado.\nSi es intolerante a la lactosa los puede consumir “sin lactosa”.\n1 PORCIÓN: 200 ml - 1 vaso leche semi-descremado O 1 yogurt light O 1 tajada quesillo - queso fresco - queso cabra (30 gr).",
       aceites_grasas: "1 porción: 1 cda aceite (10 ml) o equivalente (según pauta).",
-      ricos_lipidos: "Estas son grasas saludables, grasas buenas.\nAportan acidos grasos monoinsaturadas y poliinsaturadas.1 porción: alimentos ricos en grasa (según pauta).\n1 PORCIÓN: 3 cucharadas palta (1/2 unidad) (60 gr) O 1 puñado frutos secos sin sal (30 gr) O 30 gr de semillas variedad O 10 unidades aceitunas (30 gr).",
+      ricos_lipidos: "Estas son grasas saludables, grasas buenas.\nAportan acidos grasos monoinsaturadas y poliinsaturadas. 1 porción: alimentos ricos en grasa (según pauta).\n1 PORCIÓN: 3 cucharadas palta (1/2 unidad) (60 gr) O 1 puñado frutos secos sin sal (30 gr) O 30 gr de semillas variedad O 10 unidades aceitunas (30 gr).",
       azucar: "1 porción: azúcar/mermelada/postre (según pauta)."
     };
     Object.keys(defaults).forEach(k=>{ $("o__"+k).value = defaults[k]; });
@@ -681,6 +657,7 @@
     t.agua = n($("agua").value);
     return t;
   }
+
   function getDist(){
     const dist = {};
     COMIDAS.forEach(c=>{
@@ -719,7 +696,7 @@
     const dx = ($("dx").value || "").trim();
     const obj = ($("objetivo").value || "").trim();
 
-    const fechaVal = todayISO(); // ✅ siempre hoy
+    const fechaVal = todayISO();
 
     const tot = getTotales();
     const dist = getDist();
@@ -769,7 +746,6 @@
     $("t_lip").textContent  = fmt(T.lip);
     $("t_prot").textContent = fmt(T.prot);
 
-    // ===== Resumen tipo Excel (por grupo + totales + adecuación + molécula) =====
     let S = {kcal:0, prot:0, cho:0, lip:0};
     Object.keys(INTERCAMBIOS).forEach(k=>{
       const p = n($("t__"+k)?.value);
@@ -795,37 +771,31 @@
 
     const tk = n($("target_kcal")?.value);
 
-    // Molécula calórica ingresada manualmente (%)
     const mP = n($("mol_in_prot")?.value);
     const mC = n($("mol_in_cho")?.value);
     const mL = n($("mol_in_lip")?.value);
     const mSum = mP + mC + mL;
 
-    // Calcula gramos objetivo desde kcal y molécula (Prot/CHO = 4 kcal/g, Lip = 9 kcal/g)
     const targetProtG = (tk>0 && mSum>0) ? (tk * (mP/100) / 4) : 0;
     const targetChoG  = (tk>0 && mSum>0) ? (tk * (mC/100) / 4) : 0;
     const targetLipG  = (tk>0 && mSum>0) ? (tk * (mL/100) / 9) : 0;
 
-    // Pinta gramos (solo lectura)
     if($("target_prot")) $("target_prot").value = (tk>0 && mSum>0) ? fmt(targetProtG) : "";
     if($("target_cho"))  $("target_cho").value  = (tk>0 && mSum>0) ? fmt(targetChoG)  : "";
     if($("target_lip"))  $("target_lip").value  = (tk>0 && mSum>0) ? fmt(targetLipG)  : "";
 
     const pct = (num,den)=> den>0 ? Math.round((num/den)*100) : null;
 
-    // Adecuación (%): Total calculado vs objetivo derivado
     $("adeq_kcal").textContent = (tk>0) ? String(pct(S.kcal, tk)) : "—";
     $("adeq_prot").textContent = (targetProtG>0) ? String(pct(S.prot, targetProtG)) : "—";
     $("adeq_cho").textContent  = (targetChoG>0)  ? String(pct(S.cho,  targetChoG))  : "—";
     $("adeq_lip").textContent  = (targetLipG>0)  ? String(pct(S.lip,  targetLipG))  : "—";
 
-    // Molécula calórica: muestra lo ingresado y total (suma)
     const molTotal = mSum;
     $("mol_kcal").textContent  = (mSum>0) ? fmt(molTotal) : "—";
     $("mol_prot").textContent  = (mSum>0) ? fmt(mP) : "—";
     $("mol_cho").textContent   = (mSum>0) ? fmt(mC) : "—";
     $("mol_lip").textContent   = (mSum>0) ? fmt(mL) : "—";
-
 
     const ind = ($("indicaciones").value || "").trim();
     $("indicacionesOut").textContent = ind || "—";
@@ -862,7 +832,6 @@
       : (lines.join("<br>") || "—");
   }
 
-  // ✅ IMPRESIÓN: filas reales + rowspan; ✅ sin "+"
   function buildPrintSheet(){
     const paciente = ($("paciente").value || "").trim();
     const rut = ($("rut").value || "").trim();
@@ -979,7 +948,8 @@
     $("mol_in_lip").value = 30;
 
     const setT = (k,v)=> $("t__"+k).value = v;
-    setT("cereales", 5);
+    setT("cho_desayuno_once", 2);
+    setT("cho_almuerzo_cena", 3);
     setT("frutas", 3);
     setT("carnes_bajas_grasa", 3);
     setT("lacteos_bajos_grasa", 2);
@@ -990,14 +960,19 @@
 
     const setD = (meal,k,v)=> $(meal+"__"+k).value = v;
 
-    setD("desayuno","cereales",2);
+    setD("desayuno","cho_desayuno_once",2);
     setD("desayuno","frutas",1);
     setD("desayuno","lacteos_bajos_grasa",1);
 
-    setD("almuerzo","cereales",3);
+    setD("almuerzo","cho_almuerzo_cena",3);
     setD("almuerzo","carnes_bajas_grasa",3);
     setD("almuerzo","aceites_grasas",2);
     setD("almuerzo","verduras_libres",2);
+
+    setD("once","frutas",1);
+    setD("once","lacteos_bajos_grasa",1);
+
+    setD("cena","frutas",1);
 
     generar();
   }
@@ -1026,14 +1001,12 @@
     });
   }
 
-  // Init
   buildTotales();
   buildOpciones();
   buildDistribucion();
   wireAutoUpdate();
   generar();
 
-  // ✅ Imprimir: abre ventana con título Paciente_DD-MM-YYYY
   $("btnImprimir").addEventListener("click", ()=>{
     generar();
     buildPrintSheet();
@@ -1058,8 +1031,6 @@
     #printSheet{ display:block !important; }
     header, #panelInputs, #panelOpciones, .no-print, #panelPauta { display:none !important; }
     main{ display:block !important; padding:0 !important; }
-  
-    /* Firma solo en última página (flujo normal) */
     #printFooter{
       margin-top:24px;
       text-align:center;
@@ -1070,17 +1041,11 @@
       line-height:1.4;
       font-weight:700;
     }
-
-
-    /* ===== Ajustes de impresión ===== */
     @media print{
-      /* Repite encabezado si la tabla parte entre páginas */
       thead{ display: table-header-group; }
       tfoot{ display: table-footer-group; }
       tr{ page-break-inside: avoid; }
     }
-
-    /* Firma SOLO una vez (al final del documento = última página) */
     #printFooter{
       display:block;
       margin-top:24px;
@@ -1092,115 +1057,7 @@
       line-height:1.4;
       font-weight:700;
     }
-
-
-    /* ===== Tabla tipo Excel (resumen por porciones) ===== */
-    .excel-top{
-      display:flex; gap:10px; align-items:stretch; flex-wrap:wrap;
-      margin-bottom:10px;
-    }
-    .excel-tag{
-      background:#111; color:#fff; font-weight:800; padding:10px 12px;
-      border-radius:10px; display:flex; align-items:center;
-      letter-spacing:0.2px;
-    }
-    .excel-targets{
-      display:grid; gap:10px;
-      grid-template-columns: repeat(7, minmax(140px,1fr));
-      flex:1;
-    }
-    .excel-target label{ margin:0 0 6px 0; }
-    .excel-table{
-      width:100%;
-      border-collapse:collapse;
-      table-layout:fixed;
-      font-size:13px;
-    }
-    .excel-table th, .excel-table td{
-      border:1px solid #111;
-      padding:8px;
-      vertical-align:middle;
-      background:#fff;
-    }
-    .excel-table thead th{
-      background:#111;
-      color:#fff;
-      font-weight:900;
-      text-align:center;
-    }
-    .excel-table .th-left{ text-align:left; }
-    .excel-table .th-mid{ text-align:center; width:130px; }
-    .excel-table td.num{ text-align:center; font-weight:700; }
-    .excel-table td.calc{ text-align:center; }
-    .excel-table input{
-      padding:8px;
-      border-radius:8px;
-      border:1px solid #ddd;
-    }
-    .excel-total th, .excel-total td, .excel-total{
-      background:#111 !important;
-      color:#fff !important;
-      font-weight:900;
-      text-align:center;
-    }
-    .excel-adeq th, .excel-adeq td, .excel-adeq{
-      background:#111 !important;
-      color:#fff !important;
-      font-weight:900;
-      text-align:center;
-    }
-    .excel-mol th, .excel-mol td, .excel-mol{
-      background:#111 !important;
-      color:#fff !important;
-      font-weight:900;
-      text-align:center;
-    }
-    @media (max-width: 900px){
-      .excel-targets{ grid-template-columns: repeat(2, minmax(140px,1fr)); }
-    }
-
-/* === Tabla Excel más angosta === */
-.excel-table {
-  font-size: 12px;
-  table-layout: fixed;
-}
-
-.excel-table th,
-.excel-table td {
-  padding: 6px 6px;
-}
-
-.excel-table th:nth-child(1),
-.excel-table td:nth-child(1) {
-  width: 220px; /* Grupos alimentos */
-}
-
-.excel-table th:nth-child(2),
-.excel-table td:nth-child(2) {
-  width: 80px;  /* Nº porciones */
-  text-align: center;
-}
-
-.excel-table th:nth-child(3),
-.excel-table td:nth-child(3),
-.excel-table th:nth-child(4),
-.excel-table td:nth-child(4),
-.excel-table th:nth-child(5),
-.excel-table td:nth-child(5),
-.excel-table th:nth-child(6),
-.excel-table td:nth-child(6) {
-  width: 95px;  /* kcal y macros */
-  text-align: center;
-}
-
-.excel-table input[type="number"] {
-  width: 60px;
-  height: 26px;
-  font-size: 12px;
-  padding: 3px 4px;
-}
-
-</style>
+  </style>
 </head>
 <body>
   <main>
@@ -1217,10 +1074,6 @@
 
   $("btnLimpiar").addEventListener("click", limpiar);
   $("btnEjemplo").addEventListener("click", cargarEjemplo);
-
-
-
-
 </script>
 </body>
 </html>
