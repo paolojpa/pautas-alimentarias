@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Pauta de Alimentación</title>
+  <title>Pauta Clínica por Intercambios</title>
 
   <style>
     :root{ --b:#111; --mut:#666; --line:#e8e8e8; --card:#fff; --bg:#fafafa; --pri:#2563eb; }
@@ -478,7 +478,7 @@
       <div class="sig">
         Paolo Peña A.<br>
         <span>Nutricionista</span><br>
-        <span>+56 9 7392 9960</span>
+        <span>+56 9 4399 8845</span>
       </div>
     </div>
   </section>
@@ -487,7 +487,7 @@
 <script>
   const FOOTER_NAME = "Paolo Peña A.";
   const FOOTER_ROLE = "Nutricionista";
-  const FOOTER_PHONE = "+56 9 7392 9960";
+  const FOOTER_PHONE = "+56 9 4399 8845";
 
   function todayISO(){
     const d = new Date();
@@ -514,9 +514,8 @@
       .replace(/\s/g, "_");
   }
 
-  const INTERCAMBIOS = {
-    cho_desayuno_once:     { label:"CHO desayuno / once", kcal:140, cho:30, lip:1, prot:3 },
-    cho_almuerzo_cena:     { label:"CHO almuerzo / cena", kcal:140, cho:30, lip:1, prot:3 },
+  const INTERCAMBIOS_TOTALES = {
+    cereal:                { label:"Cereal", kcal:140, cho:30, lip:1, prot:3 },
 
     verduras_general:      { label:"Verduras (general)", kcal:30,  cho:5,   lip:0,  prot:2 },
     verduras_libres:       { label:"Verduras (libre consumo)", kcal:10, cho:2.5, lip:0, prot:0 },
@@ -537,6 +536,29 @@
     azucar:                { label:"Azúcar", kcal:20, cho:5, lip:0, prot:0 }
   };
 
+  const INTERCAMBIOS_DISTRIBUCION = [
+    { key:"cho_desayuno_once", label:"CHO desayuno / once", base:"cereal" },
+    { key:"cho_almuerzo_cena", label:"CHO almuerzo / cena", base:"cereal" },
+
+    { key:"verduras_general", label:"Verduras (general)", base:"verduras_general" },
+    { key:"verduras_libres", label:"Verduras (libre consumo)", base:"verduras_libres" },
+
+    { key:"frutas", label:"Frutas", base:"frutas" },
+
+    { key:"carnes_altas_grasa", label:"Carnes (altas en grasa)", base:"carnes_altas_grasa" },
+    { key:"carnes_bajas_grasa", label:"Carnes (bajas en grasa)", base:"carnes_bajas_grasa" },
+    { key:"leguminosas", label:"Leguminosas", base:"leguminosas" },
+
+    { key:"lacteos_altos_grasa", label:"Lácteos (altos en grasa)", base:"lacteos_altos_grasa" },
+    { key:"lacteos_medios_grasa", label:"Lácteos (medios en grasa)", base:"lacteos_medios_grasa" },
+    { key:"lacteos_bajos_grasa", label:"Lácteos (bajos en grasa)", base:"lacteos_bajos_grasa" },
+
+    { key:"aceites_grasas", label:"Aceites y grasas", base:"aceites_grasas" },
+    { key:"ricos_lipidos", label:"Alimentos ricos en lípidos", base:"ricos_lipidos" },
+
+    { key:"azucar", label:"Azúcar", base:"azucar" }
+  ];
+
   const COMIDAS = [
     { key:"desayuno", label:"Desayuno" },
     { key:"col_am",   label:"Colación AM" },
@@ -546,6 +568,7 @@
     { key:"cena",     label:"Cena" },
   ];
 
+  const DIST_MAP = Object.fromEntries(INTERCAMBIOS_DISTRIBUCION.map(x => [x.key, x]));
   const $ = (id)=>document.getElementById(id);
   const n = (v)=> Number(v || 0);
 
@@ -553,6 +576,7 @@
     const r = Math.round(x*10)/10;
     return (Math.abs(r - Math.round(r)) < 1e-9) ? String(Math.round(r)) : String(r);
   }
+
   function escapeSmall(str){
     return (str || "")
       .replaceAll("&","&amp;")
@@ -564,10 +588,10 @@
     const tbody = $("totalesTbody");
     tbody.innerHTML = "";
 
-    Object.keys(INTERCAMBIOS).forEach(k=>{
+    Object.keys(INTERCAMBIOS_TOTALES).forEach(k=>{
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td class="th-left">${INTERCAMBIOS[k].label}</td>
+        <td class="th-left">${INTERCAMBIOS_TOTALES[k].label}</td>
         <td class="num">
           <input type="number" min="0" step="0.5" id="t__${k}" placeholder="0"/>
         </td>
@@ -583,11 +607,12 @@
   function buildOpciones(){
     const grid = $("opcionesGrid");
     grid.innerHTML = "";
-    Object.keys(INTERCAMBIOS).forEach(k=>{
+
+    INTERCAMBIOS_DISTRIBUCION.forEach(item=>{
       const d = document.createElement("div");
       d.innerHTML = `
-        <label>${INTERCAMBIOS[k].label}</label>
-        <textarea id="o__${k}" placeholder="Ej: 1 porción: ..."></textarea>
+        <label>${item.label}</label>
+        <textarea id="o__${item.key}" placeholder="Ej: 1 porción: ..."></textarea>
       `;
       grid.appendChild(d);
     });
@@ -609,27 +634,33 @@
       ricos_lipidos: "Estas son grasas saludables, grasas buenas.\nAportan acidos grasos monoinsaturadas y poliinsaturadas. 1 porción: alimentos ricos en grasa (según pauta).\n1 PORCIÓN: 3 cucharadas palta (1/2 unidad) (60 gr) O 1 puñado frutos secos sin sal (30 gr) O 30 gr de semillas variedad O 10 unidades aceitunas (30 gr).",
       azucar: "1 porción: azúcar/mermelada/postre (según pauta)."
     };
-    Object.keys(defaults).forEach(k=>{ $("o__"+k).value = defaults[k]; });
+
+    Object.keys(defaults).forEach(k=>{
+      const el = $("o__"+k);
+      if(el) el.value = defaults[k];
+    });
   }
 
   function buildDistribucion(){
     const wrap = $("distribucionWrap");
     wrap.innerHTML = "";
+
     COMIDAS.forEach(c=>{
       const card = document.createElement("div");
       card.className = "card";
       card.style.border = "1px solid #eee";
       card.style.marginBottom = "10px";
       card.innerHTML = `<b>${c.label}</b> <span class="muted">— porciones por grupo</span>`;
+
       const grid = document.createElement("div");
       grid.className = "grid3";
       grid.style.marginTop = "10px";
 
-      Object.keys(INTERCAMBIOS).forEach(k=>{
+      INTERCAMBIOS_DISTRIBUCION.forEach(item=>{
         const d = document.createElement("div");
         d.innerHTML = `
-          <label>${INTERCAMBIOS[k].label}</label>
-          <input type="number" min="0" step="0.5" id="${c.key}__${k}" placeholder="0"/>
+          <label>${item.label}</label>
+          <input type="number" min="0" step="0.5" id="${c.key}__${item.key}" placeholder="0"/>
         `;
         grid.appendChild(d);
       });
@@ -641,7 +672,7 @@
 
   function getTotales(){
     const t = {};
-    Object.keys(INTERCAMBIOS).forEach(k=> t[k] = n($("t__"+k).value));
+    Object.keys(INTERCAMBIOS_TOTALES).forEach(k=> t[k] = n($("t__"+k).value));
     t.agua = n($("agua").value);
     return t;
   }
@@ -650,31 +681,39 @@
     const dist = {};
     COMIDAS.forEach(c=>{
       dist[c.key] = {};
-      Object.keys(INTERCAMBIOS).forEach(k=> dist[c.key][k] = n($(c.key+"__"+k).value));
+      INTERCAMBIOS_DISTRIBUCION.forEach(item=>{
+        dist[c.key][item.key] = n($(c.key+"__"+item.key).value);
+      });
     });
     return dist;
   }
 
   function sumMealMacros(mealObj){
     let kcal=0, cho=0, lip=0, prot=0;
-    Object.keys(INTERCAMBIOS).forEach(k=>{
-      const p = n(mealObj[k]);
+
+    INTERCAMBIOS_DISTRIBUCION.forEach(item=>{
+      const p = n(mealObj[item.key]);
       if(!p) return;
-      const ex = INTERCAMBIOS[k];
-      kcal += p*ex.kcal;
-      cho  += p*ex.cho;
-      lip  += p*ex.lip;
-      prot += p*ex.prot;
+      const ex = INTERCAMBIOS_TOTALES[item.base];
+      kcal += p * ex.kcal;
+      cho  += p * ex.cho;
+      lip  += p * ex.lip;
+      prot += p * ex.prot;
     });
+
     return {kcal, cho, lip, prot};
   }
 
-  function sumDistByGroup(dist){
+  function sumDistByBase(dist){
     const s = {};
-    Object.keys(INTERCAMBIOS).forEach(k=> s[k]=0);
+    Object.keys(INTERCAMBIOS_TOTALES).forEach(k=> s[k] = 0);
+
     COMIDAS.forEach(c=>{
-      Object.keys(INTERCAMBIOS).forEach(k=> s[k] += n(dist[c.key][k]));
+      INTERCAMBIOS_DISTRIBUCION.forEach(item=>{
+        s[item.base] += n(dist[c.key][item.key]);
+      });
     });
+
     return s;
   }
 
@@ -685,10 +724,9 @@
     const obj = ($("objetivo").value || "").trim();
 
     const fechaVal = todayISO();
-
     const tot = getTotales();
     const dist = getDist();
-    const sumByGroup = sumDistByGroup(dist);
+    const sumByBase = sumDistByBase(dist);
 
     const metaParts = [];
     metaParts.push(`<b>Paciente:</b> ${paciente || "—"}`);
@@ -706,15 +744,20 @@
 
     COMIDAS.forEach(c=>{
       const meal = dist[c.key];
-      const portions = Object.keys(INTERCAMBIOS).map(k=>({k,p:n(meal[k])})).filter(x=>x.p>0);
+      const portions = INTERCAMBIOS_DISTRIBUCION
+        .map(item => ({ item, p:n(meal[item.key]) }))
+        .filter(x => x.p > 0);
 
       if(portions.length) anyDistrib = true;
 
       const m = sumMealMacros(meal);
-      T.kcal += m.kcal; T.cho += m.cho; T.lip += m.lip; T.prot += m.prot;
+      T.kcal += m.kcal;
+      T.cho += m.cho;
+      T.lip += m.lip;
+      T.prot += m.prot;
 
       const desc = portions.length
-        ? portions.map(x => `${INTERCAMBIOS[x.k].label}: <b>${fmt(x.p)}</b>`).join("<br>")
+        ? portions.map(x => `${x.item.label}: <b>${fmt(x.p)}</b>`).join("<br>")
         : `<span class="muted">—</span>`;
 
       const tr = document.createElement("tr");
@@ -735,9 +778,10 @@
     $("t_prot").textContent = fmt(T.prot);
 
     let S = {kcal:0, prot:0, cho:0, lip:0};
-    Object.keys(INTERCAMBIOS).forEach(k=>{
+
+    Object.keys(INTERCAMBIOS_TOTALES).forEach(k=>{
       const p = n($("t__"+k)?.value);
-      const ex = INTERCAMBIOS[k];
+      const ex = INTERCAMBIOS_TOTALES[k];
       const kcal = p*ex.kcal;
       const prot = p*ex.prot;
       const cho = p*ex.cho;
@@ -749,7 +793,10 @@
       set("cho__"+k, cho);
       set("lip__"+k, lip);
 
-      S.kcal += kcal; S.prot += prot; S.cho += cho; S.lip += lip;
+      S.kcal += kcal;
+      S.prot += prot;
+      S.cho += cho;
+      S.lip += lip;
     });
 
     $("sum_kcal").textContent = fmt(S.kcal);
@@ -779,8 +826,7 @@
     $("adeq_cho").textContent  = (targetChoG>0)  ? String(pct(S.cho,  targetChoG))  : "—";
     $("adeq_lip").textContent  = (targetLipG>0)  ? String(pct(S.lip,  targetLipG))  : "—";
 
-    const molTotal = mSum;
-    $("mol_kcal").textContent  = (mSum>0) ? fmt(molTotal) : "—";
+    $("mol_kcal").textContent  = (mSum>0) ? fmt(mSum) : "—";
     $("mol_prot").textContent  = (mSum>0) ? fmt(mP) : "—";
     $("mol_cho").textContent   = (mSum>0) ? fmt(mC) : "—";
     $("mol_lip").textContent   = (mSum>0) ? fmt(mL) : "—";
@@ -790,8 +836,8 @@
     $("aguaOut").textContent = tot.agua ? `Agua: ${tot.agua} vasos/día.` : "Agua: —";
 
     let ok = true;
-    const diffs = Object.keys(INTERCAMBIOS).map(k=>{
-      const diff = (sumByGroup[k] - (tot[k] || 0));
+    const diffs = Object.keys(INTERCAMBIOS_TOTALES).map(k=>{
+      const diff = (sumByBase[k] - (tot[k] || 0));
       if (Math.abs(diff) > 1e-6) ok = false;
       return { k, diff };
     });
@@ -812,7 +858,7 @@
       .filter(x=> Math.abs(x.diff) > 1e-6)
       .map(x=>{
         const sign = x.diff > 0 ? "+" : "";
-        return `${INTERCAMBIOS[x.k].label}: <b>${sign}${fmt(x.diff)}</b> (Distribución - Total)`;
+        return `${INTERCAMBIOS_TOTALES[x.k].label}: <b>${sign}${fmt(x.diff)}</b> (Distribución - Total)`;
       });
 
     $("chequeo").innerHTML = ok
@@ -836,7 +882,7 @@
       `<b>Fecha:</b> ${formatDateCL(fechaVal)}`
     ].filter(Boolean);
 
-    if(dx) meta.push(`<b>Motivo:</b> ${escapeSmall(dx)}`);
+    if(dx) meta.push(`<b>Dx/Motivo:</b> ${escapeSmall(dx)}`);
     if(obj) meta.push(`<b>Objetivo:</b> ${escapeSmall(obj)}`);
     $("printMeta").innerHTML = meta.join("<br>");
 
@@ -855,15 +901,15 @@
     COMIDAS.forEach(c=>{
       const meal = dist[c.key];
 
-      const portions = Object.keys(INTERCAMBIOS)
-        .map(k => ({k, p: n(meal[k])}))
+      const portions = INTERCAMBIOS_DISTRIBUCION
+        .map(item => ({ item, p: n(meal[item.key]) }))
         .filter(x => x.p > 0);
 
       if(!portions.length) return;
       printedAny = true;
 
       portions.forEach((x, idx) => {
-        const raw = ($("o__"+x.k)?.value || "").trim();
+        const raw = ($("o__"+x.item.key)?.value || "").trim();
         const safe = escapeSmall(raw);
 
         const lines = safe.split(/\n+/).map(s=>s.trim()).filter(Boolean);
@@ -871,13 +917,8 @@
           ? `<ul>${lines.map(li=>`<li>${li}</li>`).join("")}</ul>`
           : (safe ? `<div>${safe}</div>` : `<div>—</div>`);
 
-        const nombrePrint = (x.k === "cho_desayuno_once" || x.k === "cho_almuerzo_cena")
-          ? "CEREAL"
-          : INTERCAMBIOS[x.k].label;
-
-        const tituloPrint = (x.k === "cho_desayuno_once" || x.k === "cho_almuerzo_cena")
-          ? "CEREALES:"
-          : INTERCAMBIOS[x.k].label + ":";
+        const nombrePrint = (x.item.base === "cereal") ? "CEREAL" : INTERCAMBIOS_TOTALES[x.item.base].label;
+        const tituloPrint = (x.item.base === "cereal") ? "CEREAL:" : INTERCAMBIOS_TOTALES[x.item.base].label + ":";
 
         const tr = document.createElement("tr");
 
@@ -929,7 +970,9 @@
 
   function limpiar(){
     COMIDAS.forEach(c=>{
-      Object.keys(INTERCAMBIOS).forEach(k=> $(c.key+"__"+k).value = "");
+      INTERCAMBIOS_DISTRIBUCION.forEach(item=>{
+        $(c.key+"__"+item.key).value = "";
+      });
     });
     generar();
   }
@@ -945,13 +988,13 @@
     $("mol_in_lip").value = 30;
 
     const setT = (k,v)=> $("t__"+k).value = v;
-    setT("cho_desayuno_once", 2);
-    setT("cho_almuerzo_cena", 3);
+    setT("cereal", 5);
     setT("frutas", 3);
     setT("carnes_bajas_grasa", 3);
     setT("lacteos_bajos_grasa", 2);
     setT("aceites_grasas", 2);
     setT("verduras_libres", 2);
+
     $("agua").value = 8;
     $("indicaciones").value = "Preferir cocciones bajas en grasa. Verduras en cada comida.";
 
@@ -983,15 +1026,15 @@
       node.addEventListener("change", generar);
     });
 
-    Object.keys(INTERCAMBIOS).forEach(k=>{
+    Object.keys(INTERCAMBIOS_TOTALES).forEach(k=>{
       const node = $("t__"+k);
       if(!node) return;
       node.addEventListener("input", generar);
     });
 
     COMIDAS.forEach(c=>{
-      Object.keys(INTERCAMBIOS).forEach(k=>{
-        const node = $(c.key+"__"+k);
+      INTERCAMBIOS_DISTRIBUCION.forEach(item=>{
+        const node = $(c.key+"__"+item.key);
         if(!node) return;
         node.addEventListener("input", generar);
       });
