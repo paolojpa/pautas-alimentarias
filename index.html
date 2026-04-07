@@ -836,7 +836,7 @@
       `<b>Fecha:</b> ${formatDateCL(fechaVal)}`
     ].filter(Boolean);
 
-    if(dx) meta.push(`<b>Dx/Motivo:</b> ${escapeSmall(dx)}`);
+    if(dx) meta.push(`<b>Motivo:</b> ${escapeSmall(dx)}`);
     if(obj) meta.push(`<b>Objetivo:</b> ${escapeSmall(obj)}`);
     $("printMeta").innerHTML = meta.join("<br>");
 
@@ -876,7 +876,7 @@
           : INTERCAMBIOS[x.k].label;
 
         const tituloPrint = (x.k === "cho_desayuno_once" || x.k === "cho_almuerzo_cena")
-          ? "CEREAL:"
+          ? "CEREALES:"
           : INTERCAMBIOS[x.k].label + ":";
 
         const tr = document.createElement("tr");
